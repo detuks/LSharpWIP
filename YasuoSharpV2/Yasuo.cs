@@ -181,7 +181,6 @@ namespace YasuoSharpV2
         {
             try
             {
-                stackQ();
                 YasDash closeDash = getClosestDash();
                 if (closeDash != null)
                 {
@@ -193,7 +192,6 @@ namespace YasuoSharpV2
                         if (W.IsReady() && distToDash < 136f && jumps.Count == 0 && NavMesh.LineOfSightTest(closeDash.to, closeDash.to)
                            && MinionManager.GetMinions(Game.CursorPos, 350).Where(min => min.IsVisible).Count() < 2)
                         {
-                            SmoothMouse.addMouseEvent(closeDash.to);
                             W.Cast(closeDash.to);
                         }
 
@@ -205,7 +203,6 @@ namespace YasuoSharpV2
 
                         if (distToDash < 3f && jumps.Count > 0 && jumps.First().Distance(Player)<=470)
                         {
-                            SmoothMouse.addMouseEvent(jumps.First().Position);
                             E.Cast(jumps.First());
                         }
                         return;
@@ -277,8 +274,10 @@ namespace YasuoSharpV2
                 putWallBehind(target);
             if (YasuoSharp.Config.Item("useEWall").GetValue<bool>())
                 eBehindWall(target);
+
             Obj_AI_Base goodTarg = canDoEQEasly(target);
-            if (goodTarg != null && goodTarg.Distance(Player)<=470)
+            var outPut = Prediction.GetPrediction(goodTarg, 700 + Player.MoveSpeed);
+            if (goodTarg != null && outPut.UnitPosition.Distance(Player.Position) <= 470)
             {
 
                 E.Cast(goodTarg);
@@ -643,15 +642,24 @@ namespace YasuoSharpV2
         }
 
 
-        public static IsSafeResult isSafePoint(Vector2 point)
+        public static IsSafeResult isSafePoint(Vector2 point, bool igonre = false)
         {
             var result = new IsSafeResult();
             result.SkillshotList = new List<Skillshot>();
             result.casters = new List<Obj_AI_Base>();
-
+            if (!igonre)
+            {
+                bool safe = YasuoSharp.Orbwalker.ActiveMode.ToString() == "Combo" ||
+                            ((Vector3) point).GetEnemiesInRange(500).Sum(ene => ene.HealthPercent) < 150;
+                if (!safe)
+                {
+                    result.IsSafe = false;
+                    return result;
+                }
+            }
             foreach (var skillshot in YasuoSharp.DetectedSkillshots)
             {
-                if (skillshot.IsDanger(point))
+                if (skillshot.IsDanger(point) && skillshot.IsAboutToHit(500,Player))
                 {
                     result.SkillshotList.Add(skillshot);
                     result.casters.Add(skillshot.Unit);

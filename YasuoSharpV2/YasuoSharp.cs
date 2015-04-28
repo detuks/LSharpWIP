@@ -244,7 +244,7 @@ namespace YasuoSharpV2
 
                     Yasuo.Q.SetSkillshot(Yasuo.getNewQSpeed(), 50f, float.MaxValue, false, SkillshotType.SkillshotLine);
 
-                    if (Yasuo.startDash + 475000/((700 + Yasuo.Player.MoveSpeed)) < Environment.TickCount && Yasuo.isDashigPro)
+                    if (Yasuo.startDash + 470000/((700 + Yasuo.Player.MoveSpeed)) < Environment.TickCount && Yasuo.isDashigPro)
                     {
                         Yasuo.isDashigPro = false;
                     }
@@ -279,6 +279,7 @@ namespace YasuoSharpV2
                     if (Config.Item("flee").GetValue<KeyBind>().Active)
                     {
                         Yasuo.fleeToMouse();
+                        Yasuo.stackQ();
                     }
 
                     if (Config.Item("saveDash").GetValue<KeyBind>().Active && canSave)
@@ -345,7 +346,7 @@ namespace YasuoSharpV2
                     {
                         Yasuo.useWSmart(mis);
 
-                        if (Config.Item("smartEDogue").GetValue<bool>() && !Yasuo.isSafePoint(Yasuo.Player.Position.To2D()).IsSafe)
+                        if (Config.Item("smartEDogue").GetValue<bool>() && !Yasuo.isSafePoint(Yasuo.Player.Position.To2D(),true).IsSafe)
                             Yasuo.useEtoSafe(mis);
                     }
 
