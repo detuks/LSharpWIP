@@ -89,7 +89,7 @@ namespace YasuoSharpV2
         }
     }
 
-    internal class SpellList<T> : List<T>
+    public class SpellList<T> : List<T>
     {
         public event EventHandler OnAdd;
 
