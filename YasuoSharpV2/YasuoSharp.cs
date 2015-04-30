@@ -56,6 +56,8 @@ namespace YasuoSharpV2
                 Yasuo.point1 = Yasuo.Player.Position;
                 Game.PrintChat("YasuoSharpV2 by DeTuKs");
 
+                Console.WriteLine("YasuoSharpV2 by DeTuKs");
+
                 try
                 {
 
@@ -109,7 +111,7 @@ namespace YasuoSharpV2
                     Config.SubMenu("extra").AddItem(new MenuItem("levUpSeq", "")).SetValue(new StringList(new string[2] { "Q E W Q start", "Q E Q W start" }));
 
                     //LastHit
-                    Config.AddSubMenu(new Menu("Anti Skillshots", "aShots"));
+                    Config.AddSubMenu(new Menu("Wall Usage", "aShots"));
                     //SmartW
                     Config.SubMenu("aShots").AddItem(new MenuItem("smartW", "Smart WW")).SetValue(true);
                     Config.SubMenu("aShots").AddItem(new MenuItem("smartEDogue", "E use dogue")).SetValue(true);
@@ -117,6 +119,8 @@ namespace YasuoSharpV2
                     Config.SubMenu("aShots").AddItem(new MenuItem("wwDmg", "WW if does proc HP")).SetValue(new Slider(0, 100, 1));
                     skillShotMenu = getSkilshotMenu();
                     Config.SubMenu("aShots").AddSubMenu(skillShotMenu);
+
+                    Config.SubMenu("aShots").AddSubMenu(TargetedSpellManager.setUp());
                     //Streaming
                     Config.AddSubMenu(new Menu("Stream Sharp", "stream"));
                     Config.SubMenu("stream").AddItem(new MenuItem("streamMouse", "SimulateMouse")).SetValue(false);
@@ -129,6 +133,9 @@ namespace YasuoSharpV2
                     Config.SubMenu("debug").AddItem(new MenuItem("deleteDash", "deleteLastDash")).SetValue(new KeyBind('I', KeyBindType.Press, false));
 
                     Config.AddToMainMenu();
+
+                    TargetSpellDetector.init();
+
                     Drawing.OnDraw += onDraw;
                     Game.OnUpdate += OnGameUpdate;
 
@@ -143,6 +150,7 @@ namespace YasuoSharpV2
 
                     SkillshotDetector.OnDetectSkillshot += OnDetectSkillshot;
                     SkillshotDetector.OnDeleteMissile += OnDeleteMissile;
+
 
                     Orbwalking.BeforeAttack += beforeAttack;
                     SmoothMouse.start();
@@ -244,7 +252,7 @@ namespace YasuoSharpV2
 
                     Yasuo.Q.SetSkillshot(Yasuo.getNewQSpeed(), 50f, float.MaxValue, false, SkillshotType.SkillshotLine);
 
-                    if (Yasuo.startDash + 475000/((700 + Yasuo.Player.MoveSpeed)) < Environment.TickCount && Yasuo.isDashigPro)
+                    if (Yasuo.startDash + 470000/((700 + Yasuo.Player.MoveSpeed)) < Environment.TickCount && Yasuo.isDashigPro)
                     {
                         Yasuo.isDashigPro = false;
                     }
@@ -279,6 +287,7 @@ namespace YasuoSharpV2
                     if (Config.Item("flee").GetValue<KeyBind>().Active)
                     {
                         Yasuo.fleeToMouse();
+                        Yasuo.stackQ();
                     }
 
                     if (Config.Item("saveDash").GetValue<KeyBind>().Active && canSave)
@@ -345,9 +354,14 @@ namespace YasuoSharpV2
                     {
                         Yasuo.useWSmart(mis);
 
-                        if (Config.Item("smartEDogue").GetValue<bool>() && !Yasuo.isSafePoint(Yasuo.Player.Position.To2D()).IsSafe)
+                        if (Config.Item("smartEDogue").GetValue<bool>() && !Yasuo.isSafePoint(Yasuo.Player.Position.To2D(),true).IsSafe)
                             Yasuo.useEtoSafe(mis);
                     }
+
+                    if (Config.Item("smartR").GetValue<bool>() && Yasuo.R.IsReady())
+                        Yasuo.useRSmart();
+
+                    Yasuo.processTargetedSpells();
 
 
 
@@ -363,6 +377,9 @@ namespace YasuoSharpV2
                 if (Config.Item("disDraw").GetValue<bool>())
                     return;
 
+
+
+                Drawing.DrawText(100,100,Color.Red,"targ Spells: "+TargetSpellDetector.ActiveTargeted.Count);
 
                 foreach (Obj_AI_Base jun in MinionManager.GetMinions(Yasuo.Player.ServerPosition, 700, MinionTypes.All, MinionTeam.Neutral))
                 {
@@ -443,18 +460,14 @@ namespace YasuoSharpV2
                     {
                         Yasuo.wall.setR(missle);
                     }
-                    //   Console.WriteLine(missle.SData.Name);
                 }
-                if (sender is Obj_SpellMissile && sender.IsEnemy)
-                {
 
-                    Obj_SpellMissile missle = (Obj_SpellMissile)sender;
-                }
+                if (sender is MissileClient)
+                    TargetSpellDetector.setParticle(sender);
             }
 
             private static void OnDeleteObject(GameObject sender, EventArgs args)
             {
-
                 /* int i = 0;
                  foreach (var lho in skillShots)
                  {

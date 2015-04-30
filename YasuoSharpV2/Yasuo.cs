@@ -73,6 +73,11 @@ namespace YasuoSharpV2
                 pointL = L;
                 endtime = Game.Time + 4;
             }
+
+            public bool isValid(int time = 0)
+            {
+                return pointL != null && pointR != null && endtime-(time/1000) > Game.Time;
+            }
         }
 
 
@@ -181,7 +186,6 @@ namespace YasuoSharpV2
         {
             try
             {
-                stackQ();
                 YasDash closeDash = getClosestDash();
                 if (closeDash != null)
                 {
@@ -193,7 +197,6 @@ namespace YasuoSharpV2
                         if (W.IsReady() && distToDash < 136f && jumps.Count == 0 && NavMesh.LineOfSightTest(closeDash.to, closeDash.to)
                            && MinionManager.GetMinions(Game.CursorPos, 350).Where(min => min.IsVisible).Count() < 2)
                         {
-                            SmoothMouse.addMouseEvent(closeDash.to);
                             W.Cast(closeDash.to);
                         }
 
@@ -205,7 +208,6 @@ namespace YasuoSharpV2
 
                         if (distToDash < 3f && jumps.Count > 0 && jumps.First().Distance(Player)<=470)
                         {
-                            SmoothMouse.addMouseEvent(jumps.First().Position);
                             E.Cast(jumps.First());
                         }
                         return;
@@ -271,14 +273,14 @@ namespace YasuoSharpV2
                 sumItems.cast(SummonerItems.ItemIds.BotRK, target);
 
             }
-            if (YasuoSharp.Config.Item("smartR").GetValue<bool>() && R.IsReady())
-                useRSmart();
             if (YasuoSharp.Config.Item("smartW").GetValue<bool>())
                 putWallBehind(target);
             if (YasuoSharp.Config.Item("useEWall").GetValue<bool>())
                 eBehindWall(target);
+
             Obj_AI_Base goodTarg = canDoEQEasly(target);
-            if (goodTarg != null && goodTarg.Distance(Player)<=470)
+            var outPut = Prediction.GetPrediction(goodTarg, 700 + Player.MoveSpeed);
+            if (goodTarg != null && outPut.UnitPosition.Distance(Player.Position) <= 470)
             {
 
                 E.Cast(goodTarg);
@@ -334,7 +336,7 @@ namespace YasuoSharpV2
                 return null;
             List<Obj_AI_Base> jumps = ObjectManager.Get<Obj_AI_Base>().Where(enemy => enemy.NetworkId != target.NetworkId && enemyIsJumpable(enemy) && enemy.IsValidTarget(470, true)).OrderBy(jp => V2E(Player.Position, jp.Position, 475).Distance(target.Position, true)).ToList();
 
-            if (jumps.Any() && V2E(Player.Position, jumps.First().Position, 475).Distance(Player.Position, true) < 250 * 250)
+            if (jumps.Any() && V2E(Player.Position, jumps.First().Position, 475).Distance(target.Position, true) < 250 * 250)
             {
                 return jumps.First();
             }
@@ -643,15 +645,24 @@ namespace YasuoSharpV2
         }
 
 
-        public static IsSafeResult isSafePoint(Vector2 point)
+        public static IsSafeResult isSafePoint(Vector2 point, bool igonre = false)
         {
             var result = new IsSafeResult();
             result.SkillshotList = new List<Skillshot>();
             result.casters = new List<Obj_AI_Base>();
-
+            if (!igonre)
+            {
+                bool safe = YasuoSharp.Orbwalker.ActiveMode.ToString() == "Combo" ||
+                            point.To3D().GetEnemiesInRange(500).Count > Player.HealthPercent%65;
+                if (!safe)
+                {
+                    result.IsSafe = false;
+                    return result;
+                }
+            }
             foreach (var skillshot in YasuoSharp.DetectedSkillshots)
             {
-                if (skillshot.IsDanger(point))
+                if (skillshot.IsDanger(point) && skillshot.IsAboutToHit(500,Player))
                 {
                     result.SkillshotList.Add(skillshot);
                     result.casters.Add(skillshot.Unit);
@@ -718,7 +729,7 @@ namespace YasuoSharpV2
             float closest = float.MaxValue;
             Obj_AI_Base closestTarg = null;
             float currentDashSpeed = 700 + Player.MoveSpeed;
-            foreach (Obj_AI_Base enemy in ObjectManager.Get<Obj_AI_Base>().Where(ob => ob.NetworkId != skillShot.Unit.NetworkId && enemyIsJumpable(ob) && ob.Distance(Player) < E.Range))
+            foreach (Obj_AI_Base enemy in ObjectManager.Get<Obj_AI_Base>().Where(ob => ob.NetworkId != skillShot.Unit.NetworkId && enemyIsJumpable(ob) && ob.Distance(Player) < E.Range).OrderBy(ene => ene.Distance(Game.CursorPos,true)))
             {
                 var pPos = Player.Position.To2D();
                 Vector2 posAfterE = V2E(Player.Position, enemy.Position, 475);
@@ -864,7 +875,7 @@ namespace YasuoSharpV2
                 if (!inTowerRange(posAfterE))
                 {
                     Console.WriteLine("use gap?");
-                    if (isSafePoint(posAfter).IsSafe)
+                    if (isSafePoint(posAfter,true).IsSafe)
                     {
                         SmoothMouse.addMouseEvent(target.Position);
                         E.Cast(target, false);
@@ -1010,6 +1021,58 @@ namespace YasuoSharpV2
         public static float getSpellCastTime(SpellSlot slot)
         {
             return sBook.GetSpell(slot).SData.SpellCastTime;
+        }
+
+        public static void processTargetedSpells()
+        {
+            if (!W.IsReady(300) && (wall == null || !E.IsReady(200) || !wall.isValid()))
+                return;
+            foreach (var targMis in TargetSpellDetector.ActiveTargeted)
+            {
+                if (targMis == null || targMis.particle == null || targMis.blockBelow <Player.HealthPercent)
+                    continue;
+                try
+                {
+                    var misDist = targMis.particle.Position.Distance(Player.Position);
+                    if (misDist < 700)
+                    {
+                        if (W.IsReady() && misDist < 500)
+                        {
+                            Vector3 blockwhere = Player.ServerPosition +
+                                                 Vector3.Normalize(targMis.particle.Position - Player.Position)*150;
+                            SmoothMouse.addMouseEvent(blockwhere);
+                            W.Cast(blockwhere,true);
+                            return;
+                        }
+                        else if (E.IsReady() && wall != null && wall.isValid(500) &&
+                                 !goesThroughWall(Player.Position, targMis.particle.Position))
+                        {
+                            foreach (
+                                Obj_AI_Base enemy in
+                                    ObjectManager.Get<Obj_AI_Base>()
+                                        .Where(ob => enemyIsJumpable(ob))
+                                        .OrderBy(ene => ene.Position.Distance(Game.CursorPos, true)))
+                            {
+                                if (goesThroughWall(Player.Position, Player.Position.Extend(enemy.Position, 475)))
+                                {
+                                    E.CastOnUnit(enemy);
+                                    return;
+                                }
+
+                            }
+                        }
+                    }
+                }
+                catch (GameObjectNotFoundException)
+                {
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+
+            }
         }
     }
 }

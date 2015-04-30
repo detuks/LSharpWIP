@@ -79,6 +79,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SmoothMouse.cs" />
     <Compile Include="SummonerItems.cs" />
+    <Compile Include="TargetedSpellManager.cs" />
+    <Compile Include="Targeted\TargetSpell.cs" />
+    <Compile Include="Targeted\TargetSpellDatabase.cs" />
+    <Compile Include="Targeted\TargetSpellDetector.cs" />
     <Compile Include="YasMath.cs" />
     <Compile Include="Yasuo.cs" />
     <Compile Include="YasuoSharp.cs" />
