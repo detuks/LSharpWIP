@@ -650,7 +650,7 @@ namespace YasuoSharpV2
             var result = new IsSafeResult();
             result.SkillshotList = new List<Skillshot>();
             result.casters = new List<Obj_AI_Base>();
-            if (!igonre)
+            if (false)
             {
                 bool safe = YasuoSharp.Orbwalker.ActiveMode.ToString() == "Combo" ||
                             point.To3D().GetEnemiesInRange(500).Count > Player.HealthPercent%65;

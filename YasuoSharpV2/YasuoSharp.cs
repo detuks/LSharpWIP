@@ -142,6 +142,7 @@ namespace YasuoSharpV2
                     GameObject.OnCreate += OnCreateObject;
                     GameObject.OnDelete += OnDeleteObject;
                     Obj_AI_Base.OnProcessSpellCast += OnProcessSpell;
+                    Spellbook.OnStopCast += onStopCast;
                     Obj_AI_Base.OnFloatPropertyChange += OnFloatPropertyChange;
                     CustomEvents.Unit.OnLevelUp += OnLevelUp;
 
@@ -161,6 +162,7 @@ namespace YasuoSharpV2
                 }
 
             }
+
 
             private static void OnFloatPropertyChange(GameObject sender, GameObjectFloatPropertyChangeEventArgs args)
             {
@@ -478,6 +480,18 @@ namespace YasuoSharpV2
                      }
                      i++;
                  }*/
+            }
+
+
+            private static void onStopCast(Spellbook obj, SpellbookStopCastEventArgs args)
+            {
+                if (obj.Owner.IsMe)
+                {
+                    if (obj.Owner.IsValid && args.DestroyMissile && args.StopAnimation)
+                    {
+                        Yasuo.isDashigPro = false;
+                    }
+                }
             }
 
             public static void OnProcessSpell(Obj_AI_Base obj, GameObjectProcessSpellCastEventArgs arg)
