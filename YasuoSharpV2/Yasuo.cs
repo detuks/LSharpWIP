@@ -206,7 +206,7 @@ namespace YasuoSharpV2
                             return;
                         }
 
-                        if (distToDash < 3f && jumps.Count > 0 && jumps.First().Distance(Player)<=470)
+                        if (distToDash < 3f && jumps.Count > 0 && jumps.First().Distance(Player)<=473)
                         {
                             E.Cast(jumps.First());
                         }
@@ -332,7 +332,7 @@ namespace YasuoSharpV2
 
         public static Obj_AI_Base canDoEQEasly(Obj_AI_Hero target)
         {
-            if (!E.IsReady() || Q.IsReady(150))
+            if (!E.IsReady() || Q.IsReady(150) || !isQEmpovered())
                 return null;
             List<Obj_AI_Base> jumps = ObjectManager.Get<Obj_AI_Base>().Where(enemy => enemy.NetworkId != target.NetworkId && enemyIsJumpable(enemy) && enemy.IsValidTarget(470, true)).OrderBy(jp => V2E(Player.Position, jp.Position, 475).Distance(target.Position, true)).ToList();
 
@@ -505,7 +505,7 @@ namespace YasuoSharpV2
 
         public static void doHarass(Obj_AI_Hero target)
         {
-            if (!inTowerRange(Player.ServerPosition.To2D()) || YasuoSharp.Config.Item("harassTower").GetValue<bool>())
+            if (!Player.ServerPosition.UnderTurret(true) || YasuoSharp.Config.Item("harassTower").GetValue<bool>())
                 useQSmart(target);
         }
 
@@ -521,18 +521,6 @@ namespace YasuoSharpV2
             }
         }
 
-
-        public static bool inTowerRange(Vector2 pos)
-        {
-            //  if (!YasuoSharp.Config.Item("djTur").GetValue<bool>())
-            //      return false;
-            foreach (Obj_AI_Turret tur in ObjectManager.Get<Obj_AI_Turret>().Where(tur => tur.IsEnemy && tur.Health > 0))
-            {
-                if (pos.Distance(tur.Position.To2D()) < (850 + Player.BoundingRadius))
-                    return true;
-            }
-            return false;
-        }
 
         public static Vector3 getDashEndPos()
         {
@@ -755,7 +743,7 @@ namespace YasuoSharpV2
 
             if (!W.IsReady() || skillShot.SpellData.Type == SkillShotType.SkillshotCircle || skillShot.SpellData.Type == SkillShotType.SkillshotRing)
                 return;
-            if (skillShot.IsAboutToHit(250, Player))
+            if (skillShot.IsAboutToHit(500, Player))
             {
                 var sd = SpellDatabase.GetByMissileName(skillShot.SpellData.MissileSpellName);
                 if (sd == null)
@@ -872,7 +860,7 @@ namespace YasuoSharpV2
             {
                 Vector2 pPos = Player.ServerPosition.To2D();
                 Vector2 posAfterE = pPos + (Vector2.Normalize(target.Position.To2D() - pPos) * E.Range);
-                if (!inTowerRange(posAfterE))
+                if (!(posAfterE.To3D().UnderTurret(true)))
                 {
                     Console.WriteLine("use gap?");
                     if (isSafePoint(posAfter,true).IsSafe)

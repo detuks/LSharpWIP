@@ -464,8 +464,8 @@ namespace YasuoSharpV2
                     }
                 }
 
-                if (sender is MissileClient)
-                    TargetSpellDetector.setParticle(sender);
+                if (sender is Obj_SpellMissile && ((Obj_SpellMissile)sender).Target.IsMe)
+                    TargetSpellDetector.setParticle((Obj_SpellMissile)sender);
             }
 
             private static void OnDeleteObject(GameObject sender, EventArgs args)
