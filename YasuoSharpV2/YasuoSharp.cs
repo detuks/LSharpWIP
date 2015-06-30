@@ -437,7 +437,7 @@ namespace YasuoSharpV2
                      Drawing.DrawCircle(posAfterE.To3D(), 50, Color.Violet);
                 }
             
-                foreach (Obj_SpellMissile mis in skillShots)
+                foreach (MissileClient mis in skillShots)
                 {
                     Drawing.DrawCircle(mis.Position, 47, Color.Orange);
                     Drawing.DrawCircle(mis.EndPosition, 100, Color.BlueViolet);
@@ -464,8 +464,8 @@ namespace YasuoSharpV2
                     }
                 }
 
-                if (sender is Obj_SpellMissile && ((Obj_SpellMissile)sender).Target.IsMe)
-                    TargetSpellDetector.setParticle((Obj_SpellMissile)sender);
+                if (sender is MissileClient && ((MissileClient)sender).Target.IsMe)
+                    TargetSpellDetector.setParticle((MissileClient)sender);
             }
 
             private static void OnDeleteObject(GameObject sender, EventArgs args)
@@ -585,7 +585,7 @@ namespace YasuoSharpV2
 
 
 
-            private static void OnDeleteMissile(Skillshot skillshot, Obj_SpellMissile missile)
+            private static void OnDeleteMissile(Skillshot skillshot, MissileClient missile)
             {
                 if (skillshot.SpellData.SpellName == "VelkozQ")
                 {

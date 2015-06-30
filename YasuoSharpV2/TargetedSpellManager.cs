@@ -24,7 +24,7 @@ namespace YasuoSharpV2
 
     public class TargetedMissle
     {
-        public Obj_SpellMissile missle;
+        public MissileClient missle;
         public int blockBelowHP;
     }
 
@@ -80,7 +80,7 @@ namespace YasuoSharpV2
         {
         }
 
-        public static void addActiveSpell(Obj_SpellMissile spell)
+        public static void addActiveSpell(MissileClient spell)
         {
         }
 

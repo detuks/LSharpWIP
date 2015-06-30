@@ -773,7 +773,7 @@ namespace YasuoSharpV2
 
         }
 
-        public static void useWSmartOld(Obj_SpellMissile missle)
+        public static void useWSmartOld(MissileClient missle)
         {
             if (!W.IsReady())
                 return;
@@ -831,7 +831,7 @@ namespace YasuoSharpV2
             }
         }
 
-        public static bool missleWillHit(Obj_SpellMissile missle)
+        public static bool missleWillHit(MissileClient missle)
         {
             if (missle.Target.IsMe || YasMath.interCir(missle.StartPosition.To2D(), missle.EndPosition.To2D(), Player.Position.To2D(), missle.SData.LineWidth + Player.BoundingRadius))
             {
@@ -975,7 +975,7 @@ namespace YasuoSharpV2
 
 
 
-        public static bool isMissileCommingAtMe(Obj_SpellMissile missle)
+        public static bool isMissileCommingAtMe(MissileClient missle)
         {
             Vector3 step = missle.StartPosition + Vector3.Normalize(missle.StartPosition - missle.EndPosition) * 10;
             return (!(Player.Distance(step) < Player.Distance(missle.StartPosition)));

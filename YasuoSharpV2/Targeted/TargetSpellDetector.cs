@@ -68,7 +68,7 @@ namespace YasuoSharpV2
             return missileEffect.Replace("mis.troy", "tar.troy");
         }
 
-        public static void setParticle(Obj_SpellMissile part)
+        public static void setParticle(MissileClient part)
         {
             //Should add check if same spell :)
             foreach (var targ in ActiveTargeted)
